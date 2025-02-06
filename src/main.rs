@@ -45,8 +45,7 @@ fn print_by_section(books_by_sec: Vec<(String, Vec<book::Book>)>) {
 }
 fn main() {
     let cli = Cli::parse();
-    let connection = db::connect_to_db();
-    let _ = db::create_table(&connection);
+    let connection = book_lib::db::setup();
 
     match &cli.command {
         Commands::List {
@@ -54,10 +53,10 @@ fn main() {
             sort_by_section,
         } => {
             let mut cmd = Cli::command();
-            let books = match db::get_books(&connection) {
+            let books = match book_lib::get_books(&connection) {
                 Ok(bks) => bks,
                 Err(e) => match e {
-                    db::GetBooksError::NoBooks => {
+                    book_lib::GetBooksError::NoBooks => {
                         cmd.error(clap::error::ErrorKind::InvalidValue, "There's no books!")
                             .exit();
                     }
@@ -87,33 +86,17 @@ fn main() {
             section,
         } => {
             let mut cmd = Cli::command();
-            if !help::is_pdf(path) {
-                cmd.error(clap::error::ErrorKind::InvalidValue, "The file is not PDF!")
-                    .exit();
-            }
-            let (is_correct, good_path) = help::is_correct_path(path);
-            if !is_correct {
-                cmd.error(clap::error::ErrorKind::InvalidValue, "Invalid path!")
-                    .exit();
-            }
-            let bk = book::Book::init(
-                name.clone(),
-                good_path.unwrap().to_str().unwrap().to_string(),
-                section.clone(),
-            );
-            match db::create_book(&connection, &bk) {
+            let bk = book::Book::init(name.clone(), path.to_string(), section.clone());
+            match book_lib::create_book(&connection, &bk) {
                 Ok(_) => println!("The book has been created!"),
-                Err(err) => match err {
-                    db::CreateBookError::BookWithNameExists => {
-                        println!("The book with this name already exists!")
-                    }
-                    _ => println!("An error occured while creating the book!"),
-                },
+                Err(err) => {
+                    cmd.error(clap::error::ErrorKind::InvalidValue, err).exit();
+                }
             }
         }
         Commands::Remove { name } => {
             let mut cmd = Cli::command();
-            match db::remove_book(&connection, name) {
+            match book_lib::remove_book(&connection, name) {
                 Ok(_) => println!("The book has been removed successfully!"),
                 Err(err) => {
                     let err_mess = format!(
@@ -126,20 +109,12 @@ fn main() {
             }
         }
         Commands::Open { name } => {
-            let bk_res = db::get_book(&connection, name);
-            if let Ok(bk) = bk_res {
-                let path = bk.path;
-                process::Command::new("open")
-                    .args(["-a", "Skim", path.as_str()])
-                    .output()
-                    .expect("error while opening the file with Skim");
-            } else {
-                let mut cmd = Cli::command();
-                cmd.error(
-                    ErrorKind::InvalidValue,
-                    "the book with this name doesn't exist",
-                )
-                .exit();
+            let mut cmd = Cli::command();
+            match book_lib::open_book(&connection, name) {
+                Ok(_) => {}
+                Err(err) => {
+                    cmd.error(ErrorKind::InvalidValue, err).exit();
+                }
             }
         }
     }
