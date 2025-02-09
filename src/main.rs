@@ -86,7 +86,7 @@ fn main() {
             section,
         } => {
             let mut cmd = Cli::command();
-            let bk = book::Book::init(name.clone(), path.to_string(), section.clone());
+            let bk = book::Book::init(name.clone(), path.to_string(), section.clone(), false);
             match book_lib::create_book(&connection, &bk) {
                 Ok(_) => println!("The book has been created!"),
                 Err(err) => {
