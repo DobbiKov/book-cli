@@ -26,8 +26,11 @@ enum Commands {
         #[arg(value_hint=clap::ValueHint::Other)]
         section: Option<String>,
     },
+    #[command(trailing_var_arg = true)]
     Remove {
-        #[arg(value_hint=clap::ValueHint::Other)]
+        #[arg(value_hint = clap::ValueHint::Other, trailing_var_arg = true)]
+        #[arg(required = true)]
+        #[arg(num_args = 1..)]
         name: String,
     },
     Open {
