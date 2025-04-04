@@ -81,6 +81,8 @@ dependencies = [
 [[package]]
 name = "book_lib"
 version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6b6cacf30239a168a1e3425a3a2b905e22e4951e8552be9c8068d1f9995430df"
 dependencies = [
  "loggit",
  "rusqlite",

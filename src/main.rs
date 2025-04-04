@@ -59,7 +59,7 @@ fn main() {
             let books = match book_lib::get_books(&connection) {
                 Ok(bks) => bks,
                 Err(e) => match e {
-                    book_lib::GetBooksError::NoBooks => {
+                    book_lib::errors::GetBooksError::NoBooks => {
                         cmd.error(clap::error::ErrorKind::InvalidValue, "There's no books!")
                             .exit();
                     }
