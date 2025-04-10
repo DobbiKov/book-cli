@@ -2,6 +2,8 @@ use book_lib::{book, db, help};
 use clap::{error::ErrorKind, CommandFactory, Parser, Subcommand};
 use std::process;
 
+mod open;
+
 #[derive(Parser)]
 #[command(name = "Book CLI")]
 #[command(version = "1.0")]
@@ -113,12 +115,13 @@ fn main() {
         }
         Commands::Open { name } => {
             let mut cmd = Cli::command();
-            match book_lib::open_book(&connection, name) {
-                Ok(_) => {}
+            let book = match book_lib::get_book(&connection, name) {
+                Ok(b) => b,
                 Err(err) => {
                     cmd.error(ErrorKind::InvalidValue, err).exit();
                 }
-            }
+            };
+            open::open_mac(&book.path);
         }
     }
 }
