@@ -1,6 +1,6 @@
 use book_lib::{book, db, help};
 use clap::{error::ErrorKind, CommandFactory, Parser, Subcommand};
-use std::process;
+use std::{io::Write, process};
 
 mod open;
 
@@ -39,6 +39,10 @@ enum Commands {
         #[arg(value_hint=clap::ValueHint::Other)]
         name: String,
     },
+    Get {
+        #[arg(value_hint=clap::ValueHint::Other)]
+        name: String,
+    },
 }
 
 fn print_by_section(books_by_sec: Vec<(String, Vec<book::Book>)>) {
@@ -53,6 +57,27 @@ fn main() {
     let connection = book_lib::db::setup();
 
     match &cli.command {
+        Commands::Get { name } => {
+            let mut cmd = Cli::command();
+            let book = match book_lib::get_book(&connection, name) {
+                Ok(b) => b,
+                Err(err) => {
+                    cmd.error(ErrorKind::InvalidValue, err).exit();
+                }
+            };
+            let path = match std::path::PathBuf::from(book.path).canonicalize() {
+                Ok(r) => r,
+                Err(_) => {
+                    cmd.error(
+                        ErrorKind::InvalidValue,
+                        "Couldn't canonicalize the path to the book!",
+                    )
+                    .exit();
+                }
+            };
+            print!("{}", path.as_os_str().to_str().unwrap());
+            std::io::stdout().flush().unwrap();
+        }
         Commands::List {
             section,
             sort_by_section,
@@ -121,7 +146,8 @@ fn main() {
                     cmd.error(ErrorKind::InvalidValue, err).exit();
                 }
             };
-            open::open_mac(&book.path);
+            //open::open_mac(&book.path);
+            open::open_pdftermpy(&book.path);
         }
     }
 }
