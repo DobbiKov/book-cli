@@ -6,3 +6,9 @@ pub(crate) fn open_mac(path: &str) {
         .output()
         .expect("error while opening the file with Skim");
 }
+pub(crate) fn open_pdftermpy(path: &str) {
+    process::Command::new("termpdf.py")
+        .args([path])
+        .status()
+        .expect("error while opening the file with Skim");
+}
